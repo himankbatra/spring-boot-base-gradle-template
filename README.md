@@ -1,1 +1,1 @@
-# spring-boot-gradle-template
+# spring-boot-base-gradle-template
