@@ -1,3 +1,5 @@
+import groovy.text.GStringTemplateEngine
+
 def servicename = project.properties.getOrDefault('servicename', '')
 def classname = project.properties.getOrDefault('classname', '')
 def servicepath = project.properties.getOrDefault('servicepath', '')
@@ -68,7 +70,7 @@ task renamegradlebuildfile(type: Copy) {
         dependsOn 'createdir'
         from('templates/gradle-template')
                 {
-                    include '.github/*'
+                    include '.github/PULL_REQUEST_TEMPLATE.md'
                     include 'docs/*'
                     include 'frontend/*'
                     include 'backend/core/*'
@@ -92,7 +94,7 @@ task renamegradlebuildfile(type: Copy) {
         ]
 
         def buildFileTemplate = new File('templates/gradle-template/build.txt')
-        def engine = new groovy.text.GStringTemplateEngine()
+        def engine = new GStringTemplateEngine()
         def template = engine.createTemplate(buildFileTemplate).make(binding)
         new File("${servicepath}/${servicename}/", "build.gradle").text = template.toString()
 
@@ -104,6 +106,10 @@ task renamegradlebuildfile(type: Copy) {
         def settingsFileTemplate = new File('templates/gradle-template/settings.gradle')
         def template2 = engine.createTemplate(settingsFileTemplate).make(binding)
         new File("${servicepath}/${servicename}/", "settings.gradle").text = template2.toString()
+
+        def workflowFileTemplate = new File('templates/gradle-template/.github/workflows/ci.yml')
+        def template3 = engine.createTemplate(workflowFileTemplate).make(binding)
+        new File("${servicepath}/${servicename}/.github/workflows", "ci.yml").text = template3.toString()
 
 
         // rename 'build.txt', "build.gradle"
