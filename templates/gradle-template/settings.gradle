@@ -1,0 +1,5 @@
+rootProject.name = '${servicename}'
+include 'backend:core'
+include 'backend:api'
+include 'frontend'
+

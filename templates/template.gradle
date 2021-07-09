@@ -1,0 +1,142 @@
+def servicename = project.properties.getOrDefault('servicename', '')
+def classname = project.properties.getOrDefault('classname', '')
+def servicepath = project.properties.getOrDefault('servicepath', '')
+def servicepackage = project.properties.getOrDefault('servicepackage', '')
+task createdir {
+    if (!servicepath || !servicename || !classname || !servicepackage) {
+        println("Please pass your service name Example: ./gradlew gradletemplate -Pservicepath=. -Pservicename=new-service -Pclassname=NewServiceApplication -Pservicepackage=com/mycompany")
+    } else if (!servicename.allWhitespace) {
+        if (project.file("${servicepath}/${servicename}").exists()) {
+            throw new GradleException('project with same name exists')
+        }
+        project.file("${servicepath}/${servicename}").mkdirs()
+        project.file("${servicepath}/${servicename}/.github/workflows").mkdirs()
+        project.file("${servicepath}/${servicename}/backend/api").mkdirs()
+        project.file("${servicepath}/${servicename}/backend/core").mkdirs()
+        project.file("${servicepath}/${servicename}/docs").mkdirs()
+        project.file("${servicepath}/${servicename}/frontend").mkdirs()
+        project.file("${servicepath}/${servicename}/gradle/wrapper").mkdirs()
+        copy {
+            from 'templates/gradle-template'
+            into "${servicepath}/${servicename}/backend/api/"
+            include 'src/main/resources/application.yaml'
+            include 'src/main/java/**'
+            include 'src/test/**'
+//            include 'src/itest/**'
+        }
+        def packagename = servicename.replaceAll("[^A-Za-z0-9]", "")
+        project.file("${servicepath}/${servicename}/backend/api/src/main/java/${servicepackage}/${packagename}").mkdirs()
+        project.file("${servicepath}/${servicename}/backend/core/src/main/java/${servicepackage}/${packagename}").mkdirs()
+
+        def binding = [
+                classname         : "${classname}",
+                servicename       : "${servicename}",
+                packagename       : "${packagename}",
+                servicepath       : "${servicepath}",
+                servicepackage    : "${servicepackage}",
+                servicepackagename: servicepackage.replaceAll("/", ".")
+        ]
+
+
+        def mainClassTemplate = new File('templates/MainClassTemplate.txt')
+        def engine = new groovy.text.GStringTemplateEngine()
+        def template = engine.createTemplate(mainClassTemplate).make(binding)
+        new File("${servicepath}/${servicename}/backend/api/src/main/java/${servicepackage}/${packagename}", "${classname}.java").text = template.toString()
+        def baseTestTemplateFile = new File('templates/BaseTestTemplate.txt')
+        def baseTestTemplate = engine.createTemplate(baseTestTemplateFile).make(binding)
+
+        def bootstrapTemplateFile = new File('templates/BootstrapTemplate.txt')
+        def bootstrapTemplate = engine.createTemplate(bootstrapTemplateFile).make(binding)
+
+        project.file("${servicepath}/${servicename}/backend/api/src/main/resources").mkdirs()
+        new File("${servicepath}/${servicename}/backend/api/src/main/resources", "bootstrap.yaml").text = bootstrapTemplate.toString()
+
+        def logFile = new File('templates/LogbackTemplate.txt')
+        def logFileTemplate = engine.createTemplate(logFile).make(binding)
+        new File("${servicepath}/${servicename}/backend/api/src/main/resources", "logback-spring.xml").text = logFileTemplate.toString()
+
+
+        project.file("${servicepath}/${servicename}/backend/api/src/test/java/${servicepackage}/${packagename}").mkdirs()
+        new File("${servicepath}/${servicename}/backend/api/src/test/java/${servicepackage}/${packagename}", "BaseTest.java").text = baseTestTemplate.toString()
+        println "Created new service directory structure"
+
+    }
+}
+
+task renamegradlebuildfile(type: Copy) {
+    if (!servicename.allWhitespace) {
+        dependsOn 'createdir'
+        from('templates/gradle-template')
+                {
+                    include '.github/*'
+                    include 'docs/*'
+                    include 'frontend/*'
+                    include 'backend/core/*'
+                    include 'backend/api/build.gradle'
+                    include '.gitignore'
+                    include '.gradlew'
+                    include '.gradlew.bat'
+                }
+        into "${servicepath}/${servicename}"
+        //  include 'build.txt'
+        // destinationDir file("$servicepath/$servicename/")
+
+        def binding = [
+                classname          : "${classname}",
+                servicename        : "${servicename}",
+                servicepath        : "${servicepath}",
+                servicepackage     : "${servicepackage}",
+                spring_boot_version: "2.4.4",
+                java_version       : "11",
+                servicepackagename : servicepackage.replaceAll("/", ".")
+        ]
+
+        def buildFileTemplate = new File('templates/gradle-template/build.txt')
+        def engine = new groovy.text.GStringTemplateEngine()
+        def template = engine.createTemplate(buildFileTemplate).make(binding)
+        new File("${servicepath}/${servicename}/", "build.gradle").text = template.toString()
+
+        def readMeFileTemplate = new File('templates/gradle-template/README.md')
+        def template1 = engine.createTemplate(readMeFileTemplate).make(binding)
+        new File("${servicepath}/${servicename}/", "README.md").text = template1.toString()
+
+
+        def settingsFileTemplate = new File('templates/gradle-template/settings.gradle')
+        def template2 = engine.createTemplate(settingsFileTemplate).make(binding)
+        new File("${servicepath}/${servicename}/", "settings.gradle").text = template2.toString()
+
+
+        // rename 'build.txt', "build.gradle"
+    }
+}
+
+task gradletemplate {
+    if (!servicename.allWhitespace) {
+        dependsOn 'renamegradlebuildfile'
+        doFirst {
+            def binding = [
+                    service: servicename
+            ]
+        }
+        doLast {
+            /* def services = project.file('services.txt')
+             if (!services.exists()) {
+                 services.createNewFile();
+             }
+             services.withWriterAppend { out ->
+                 out.println()
+                 out.print(":services:${servicename}")
+             }*/
+
+            /* def javaProjects = project.file('javaprojects.txt')
+             if (!javaProjects.exists()) {
+                 javaProjects.createNewFile();
+             }*/
+            /*javaProjects.withWriterAppend { out ->
+                out.println()
+                out.print(":services:${servicename}")
+            }*/
+            println "Directory structure for $servicename created successfully"
+        }
+    }
+}

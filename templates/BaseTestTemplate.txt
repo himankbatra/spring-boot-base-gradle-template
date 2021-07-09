@@ -1,0 +1,16 @@
+package $servicepackagename.$packagename;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class BaseTest {
+
+    @DisplayName("Test Spring Integration")
+    @Test
+    void testGet() {
+        assertEquals(1, Integer.parseInt("1"));
+    }
+
+}

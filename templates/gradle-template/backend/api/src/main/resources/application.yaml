@@ -1,0 +1,24 @@
+spring:
+  profiles:
+    active: prod
+---
+spring:
+  profiles: prod
+logging:
+  level:
+    ROOT: ${LOGGING_LEVEL_ROOT}
+---
+
+spring:
+  profiles: dev
+logging:
+  level:
+    ROOT: DEBUG
+
+---
+
+spring:
+  profiles: test
+logging:
+  level:
+    ROOT: INFO

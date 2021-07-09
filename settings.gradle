@@ -1,0 +1,5 @@
+rootProject.name = 'spring-boot-base-gradle-template'
+
+/*file('javaprojects.txt').eachLine { line ->
+    include(line)
+}*/
