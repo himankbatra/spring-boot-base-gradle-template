@@ -33,7 +33,7 @@ apply from: 'templates/template.gradle'
 //
 //
 //configure(javaProjects) {
-//    group = 'com.ybl.midas'
+//    group = '${servicepackagename}'
 //
 //    repositories {
 //        maven { url maven_central }
